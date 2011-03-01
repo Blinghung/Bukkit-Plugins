@@ -16,7 +16,7 @@
  *   
  * */
 
-package com.bukkit.tazzernator.mcdocs;
+package com.tazzernator.bukkit.mcdocs;
 
 public class MCDocsCommands {
 	

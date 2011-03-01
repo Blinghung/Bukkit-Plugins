@@ -16,18 +16,15 @@
  *   
  * */
 
-package com.bukkit.tazzernator.mcdocs;
+package com.tazzernator.bukkit.mcdocs;
 
 //Java Import
-import java.io.File;
 import java.util.logging.Logger;
 
 //Bukkit Import
-import org.bukkit.Server;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginDescriptionFile;
-import org.bukkit.plugin.PluginLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.plugin.PluginManager;
 
@@ -47,7 +44,8 @@ import org.bukkit.plugin.Plugin;
 
 public class MCDocs extends JavaPlugin {
 	//Plugin Listener.
-	private final MCDocsListener playerListener = new MCDocsListener(this, getServer());
+		
+	private final MCDocsListener playerListener = new MCDocsListener(this);
 	
 	//Logger.
 	public static final Logger log = Logger.getLogger("Minecraft");
@@ -55,9 +53,9 @@ public class MCDocs extends JavaPlugin {
 	//Controller for permissions and security.
 	public static PermissionHandler Permissions = null;
 		
-	public MCDocs(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc, File folder, File plugin,	ClassLoader cLoader) {
+	/*public MCDocs(PluginLoader pluginLoader, Server instance, PluginDescriptionFile desc, File folder, File plugin,	ClassLoader cLoader) {
 		super(pluginLoader, instance, desc, folder, plugin, cLoader);
-	}		
+	}*/		
 	
 	public void onDisable() {
 	}
@@ -69,7 +67,7 @@ public class MCDocs extends JavaPlugin {
 		//Register our events
 		PluginManager pm = getServer().getPluginManager();
 		pm.registerEvent(Event.Type.PLAYER_JOIN, playerListener, Priority.Normal, this);
-		pm.registerEvent(Event.Type.PLAYER_COMMAND, playerListener, Priority.Normal, this);
+		pm.registerEvent(Event.Type.PLAYER_COMMAND_PREPROCESS, playerListener, Priority.Normal, this);
 		
 		//Check all is well
 		PluginDescriptionFile pdfFile = this.getDescription();
@@ -78,12 +76,14 @@ public class MCDocs extends JavaPlugin {
 	
 	//Setup Function for Nijikokun's Permissions plugin - By Nijikokun. - Slightly Modified for MCDocs use.
 	//http://forums.bukkit.org/threads/admn-info-permissions-v2-0-revolutionizing-the-group-system.1403/
+	@SuppressWarnings("static-access")
 	public void setupPermissions() {
 		Plugin test = this.getServer().getPluginManager().getPlugin("Permissions");
 		
 		if(this.Permissions == null) {
 			PluginDescriptionFile pdfFile = this.getDescription();
 			if(test != null) {
+				this.getServer().getPluginManager().enablePlugin(test);
 				Permissions = ((Permissions)test).getHandler();
 				log.info( pdfFile.getName() + " - Permissions Detected!" );
 			}

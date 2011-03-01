@@ -16,7 +16,7 @@
  *   
  * */
 
-package com.bukkit.tazzernator.mcdocs;
+package com.tazzernator.bukkit.mcdocs;
 
 //java imports
 import java.io.BufferedReader;
@@ -26,9 +26,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 //bukkit iimports
-import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerEvent;
@@ -39,16 +39,15 @@ public class MCDocsListener extends PlayerListener {
 	
 	//Some Variables for the class.
 	private MCDocs plugin;
+	public static final Logger log = Logger.getLogger("Minecraft");
 	private ArrayList<String> data = new ArrayList<String>();
 	private ArrayList<String> lines = new ArrayList<String>();
 	private ArrayList<String> fixedLines = new ArrayList<String>();
 	private ArrayList<MCDocsCommands> records = new ArrayList<MCDocsCommands>();
-	private Server server = null;
 	
 	//Constructor.
-	public MCDocsListener(MCDocs instance, Server server) {
+	public MCDocsListener(MCDocs instance) {
         this.plugin = instance;
-        this.server = server;
     }
 
 	//Method to read our files.
@@ -67,7 +66,7 @@ public class MCDocsListener extends PlayerListener {
 	
 	//Method to determine the online names.
 	private String onlineNames(){
-		Player online[] = server.getOnlinePlayers();
+		Player online[] = plugin.getServer().getOnlinePlayers();
         String onlineNames = null;
         for (Player o : online){
         	if (onlineNames == null){
@@ -82,7 +81,7 @@ public class MCDocsListener extends PlayerListener {
 
 	//Method to determine how many people are online.
 	private String onlineCount(){
-		Player online[] = server.getOnlinePlayers();
+		Player online[] = plugin.getServer().getOnlinePlayers();
         int onlineCount = 0;
         for (@SuppressWarnings("unused") Player o : online){
         	onlineCount++;
@@ -93,8 +92,7 @@ public class MCDocsListener extends PlayerListener {
 	private void linesProcess(Player player, String command, int page){
 		//Change all ampersands to Minecraft's weird thingo. And now in 4.0, change some variables.
         for(String l : lines){
-        	String fixedLine = l.replace('&', 'ง');
-        	fixedLine = fixedLine.replace("%name", player.getName());
+        	String fixedLine = l.replace("%name", player.getName());
         	fixedLine = fixedLine.replace("%online", onlineNames());
         	fixedLine = fixedLine.replace("%size", onlineCount());
         	if (MCDocs.Permissions != null){
@@ -109,9 +107,9 @@ public class MCDocsListener extends PlayerListener {
             		fixedLine = fixedLine.replace("%suffix", "");
         		}
         	}
+        	fixedLine = fixedLine.replace('&', 'ยง');
         	fixedLines.add(fixedLine);
         }
-      
         
         //Define our page numbers
         int size = fixedLines.size();
@@ -131,11 +129,12 @@ public class MCDocsListener extends PlayerListener {
         String folderName = folder.getParent();
         String header = null;
         
+        
         if(pages != 1){
         	//Custom Header
         	try {
     			FileInputStream fis = new FileInputStream(folderName + "/MCDocs/headerformat.txt");
-                Scanner scanner = new Scanner(fis, "UTF-8");
+                Scanner scanner = new Scanner(fis);
                     while (scanner.hasNextLine()) {
                     	try{
                     		header = scanner.nextLine();
@@ -147,7 +146,7 @@ public class MCDocsListener extends PlayerListener {
                 fis.close();
                 
                 //Replace variables.
-                header = header.replace('&', 'ง');
+                header = header.replace('&', 'ยง');
                 header = header.replace("%commandname", commandName);
                 header = header.replace("%current", Integer.toString(page));
                 header = header.replace("%count", Integer.toString(pages));
@@ -157,7 +156,7 @@ public class MCDocsListener extends PlayerListener {
                 player.sendMessage(header);
     			
     		} catch (IOException e) {
-    			player.sendMessage("งc" + commandName + " - Page " + Integer.toString(page) + " of " + Integer.toString(pages) + "  งf|  ง7" + command +" <page>");
+    			player.sendMessage("ยงc" + commandName + " - Page " + Integer.toString(page) + " of " + Integer.toString(pages) + "  ยงf|  ยง7" + command +" <page>");
     		}
         }
         //Some Maths.
@@ -168,7 +167,7 @@ public class MCDocsListener extends PlayerListener {
         }
 	}
 	
-	public void onPlayerCommand(PlayerChatEvent event) {
+	public void onPlayerCommandPreprocess(PlayerChatEvent event) {
 		
 		
 		//Find our player and message
@@ -176,7 +175,8 @@ public class MCDocsListener extends PlayerListener {
         Player player = event.getPlayer();
         File folder = plugin.getDataFolder();
         String folderName = folder.getParent();
-        
+       
+        player.sendMessage("PrePrcoess started");
        
 		//Update our Commands
         MCDocsCommands record = null;
@@ -207,6 +207,7 @@ public class MCDocsListener extends PlayerListener {
         	lines.clear();
         	fixedLines.clear();
         	String command = r.getCommand();
+        	int page = 0;
         	
         	String permission = "allow";
         	
@@ -243,7 +244,6 @@ public class MCDocsListener extends PlayerListener {
 	                    fis.close();
 	                    
 	                    //If split[1] does not exist, or has a letter, page = 1
-	                    int page;
 	                    try{
 	                        page = Integer.parseInt(split[1]);
 	                    }
@@ -251,13 +251,15 @@ public class MCDocsListener extends PlayerListener {
 	                    	page = 1;
 	                    }
 	                    
-	                    //Finally - Process our lines!
-	                    linesProcess(player, command, page);
 	                    }
 	        		
 	                 catch (Exception ex) {
 	                	player.sendMessage("File not found!");
+	                	
 	                 	}
+
+	                    //Finally - Process our lines!
+	                    linesProcess(player, command, page);
         		}
                  event.setCancelled(true);
         	}
@@ -301,6 +303,7 @@ public class MCDocsListener extends PlayerListener {
     		standardMotd(event);
      	}
 	}
+	
 	public void standardMotd(PlayerEvent event){
 		File folder = plugin.getDataFolder();
         String folderName = folder.getParent();
